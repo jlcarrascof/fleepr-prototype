@@ -1,14 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import ReactPlayer from "react-player/lazy"
+import ReactPlayer from "react-player"
 
 export function VideoPlayer({ url }: { url: string }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
   if (!mounted) {
-    return <div className="w-full aspect-video bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-muted-foreground">Cargando video...</div>
+    return (
+      <div className="w-full aspect-video bg-slate-100 animate-pulse rounded-lg flex items-center justify-center text-muted-foreground">
+        Cargando video...
+      </div>
+    )
   }
 
   return (
@@ -19,10 +23,6 @@ export function VideoPlayer({ url }: { url: string }) {
         width="100%"
         height="100%"
         controls
-        config={{
-          youtube: { playerVars: { modestbranding: 1 } },
-          vimeo: { playerOptions: { byline: false, portrait: false } }
-        }}
       />
     </div>
   )
