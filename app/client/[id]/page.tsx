@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use, Suspense } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { VideoPlayer } from "@/components/VideoPlayer"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,10 @@ interface ContentPiece {
   created_at: string
 }
 
-export default function ClientReviewPage({ params }: { params: { id: string } }) {
+// Componente interno que usa params
+function ClientReviewContent({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  
   const supabase = createClient()
   const [content, setContent] = useState<ContentPiece | null>(null)
   const [loading, setLoading] = useState(true)
@@ -27,12 +30,12 @@ export default function ClientReviewPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase.from('content_pieces').select('*').eq('id', params.id).single()
+      const { data } = await supabase.from('content_pieces').select('*').eq('id', id).single()
       if (data) setContent(data)
       setLoading(false)
     }
     fetch()
-  }, [params.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAction = async (status: 'Approved' | 'Rejected') => {
     if (status === 'Rejected' && !showFeedback) { setShowFeedback(true); return }
@@ -41,7 +44,7 @@ export default function ClientReviewPage({ params }: { params: { id: string } })
       ? { status, feedback: feedback.trim() || "Sin comentarios" } 
       : { status, feedback: null }
     
-    await supabase.from('content_pieces').update(payload).eq('id', params.id)
+    await supabase.from('content_pieces').update(payload).eq('id', id)
     setContent(prev => prev ? { ...prev, ...payload } : null)
     setSubmitting(false)
   }
@@ -110,5 +113,14 @@ export default function ClientReviewPage({ params }: { params: { id: string } })
         </Card>
       </div>
     </div>
+  )
+}
+
+// Componente principal que envuelve en Suspense
+export default function ClientReviewPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center">Cargando página...</div>}>
+      <ClientReviewContent params={params} />
+    </Suspense>
   )
 }
